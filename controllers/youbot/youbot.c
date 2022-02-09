@@ -57,7 +57,10 @@ static void step() {
   }
 }
 
-int what_color(const unsigned char *image){
+int what_color(WbDeviceTag kinect_color){
+  const unsigned char *image = wb_camera_get_image(kinect_color);
+  int width = wb_camera_get_width(kinect_color);
+  int height = wb_camera_get_height(kinect_color);
   int red = 0;
   int blue = 0;
 
@@ -146,6 +149,12 @@ static void high_level_stock(int o, bool stock) {
   passive_wait(3.0);
 }
 
+static void pick_box(WbDeviceTag kinect_color){
+  high_level_grip_box(distance_arm0_platform, -1, 0, true);
+  picked_boxes_color[picked_boxes_count]=what_color(kinect_color);
+  picked_boxes_count+=1;
+}
+
 static void place_box(int color){
   high_level_go_to(-1.611,get_box_pos_y(color),M_PI_2);
   high_level_grip_box(distance_arm0_platform, -1, 0, false);
@@ -172,25 +181,17 @@ static void automatic_behavior(WbDeviceTag kinect_color) {
   arm_set_height(ARM_HANOI_PREPARE);
 
   high_level_go_to(goto_info[0][0], goto_info[0][1], goto_info[0][2]);
-  high_level_grip_box(distance_arm0_platform, -1, 0, true);
-  const unsigned char *image = wb_camera_get_image(kinect_color);
-  picked_boxes_color[picked_boxes_count]=what_color(image);
-  picked_boxes_count+=1;
+  pick_box(kinect_color);
   high_level_stock(ARM_FRONT_LEFT, true);
   
   high_level_go_to(goto_info[1][0], goto_info[1][1], goto_info[1][2]);
-  high_level_grip_box(distance_arm0_platform, -1, 0, true);
-  picked_boxes_count+=1;
+  pick_box(kinect_color);
   high_level_stock(ARM_FRONT_RIGHT, true);
   
   high_level_go_to(goto_info[2][0], goto_info[2][1], goto_info[2][2]);
-  high_level_grip_box(distance_arm0_platform, -1, 0, true);
-  picked_boxes_count+=1;
+  pick_box(kinect_color);
 
   place_all_boxes();
-
-  // high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
-  // high_level_grip_box(distance_arm0_platform, 0, 0, false);
   
   // end behavior
   arm_reset();
@@ -212,7 +213,7 @@ int main(int argc, char **argv) {
 
   passive_wait(1.0);
 
-  automatic_behavior();
+  automatic_behavior(kinect_color);
 
   wb_robot_cleanup();
 
