@@ -47,7 +47,7 @@ SolidBox {
   translation -2 -0.4 0.005
   rotation 0.5773502691896258 0.5773502691896258 0.5773502691896258 2.094395
   name "platform"
-  size 0.7 0.01 0.2
+  size 0.7 0.01 0.1
   appearance PBRAppearance {
     baseColor 0.827451 0.843137 0.811765
     roughness 0.5
@@ -58,7 +58,7 @@ SolidBox {
   translation -2 0.4 0.005
   rotation 0.5773502691896258 0.5773502691896258 0.5773502691896258 2.094395
   name "platform(1)"
-  size 0.7 0.01 0.2
+  size 0.7 0.01 0.1
   appearance PBRAppearance {
     baseColor 0.827451 0.843137 0.811765
     roughness 0.5

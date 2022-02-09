@@ -42,8 +42,6 @@ int stored_boxes[2]={0,0};
 int picked_boxes_count=0;
 int picked_boxes_color[3]={RED_COLOR,RED_COLOR,RED_COLOR};
 
-
-
 double get_box_pos_y(int color){
   if(color==RED_COLOR)
     return 0.7-stored_boxes[color]*0.075;
@@ -191,8 +189,7 @@ static void automatic_behavior(WbDeviceTag kinect_color) {
   pick_box(kinect_color);
 
   place_all_boxes();
-  
-  // end behavior
+
   arm_reset();
   high_level_go_to(0.0, 0.0, -M_PI_2);
 }
