@@ -118,19 +118,27 @@ static void high_level_stock(int o, bool stock) {
 static void automatic_behavior() {
   double distance_arm0_platform = 0.2;
   double distance_arm0_robot_center = 0.189;
-  double distance_origin_platform = 1.0;
+  // double distance_origin_platform = 1.0;
   // double angles[3] = {0.0, 2.0 * M_PI / 3.0, -2.0 * M_PI / 3.0};
   // int GOTO_SRC = 0, GOTO_TMP = 1, GOTO_DST = 2;
-  // double delta = distance_origin_platform - distance_arm0_platform - distance_arm0_robot_center;
+  double delta = distance_arm0_platform + distance_arm0_robot_center;
   
-  double goto_info[3][3] = {{0.75, 0, -M_PI_2},
-                            {-0.943, 1.792, 0}};
+  double goto_info[3][3] = {{0.75-delta, 0, -M_PI_2},
+                            {1-delta,-0.349, -M_PI_2},
+                            {-0.943, 1.792-delta, 0}};
 
   arm_set_height(ARM_HANOI_PREPARE);
 
-  high_level_go_to(goto_info[0][0]-distance_arm0_platform-distance_arm0_robot_center, goto_info[0][1], goto_info[0][2]);
+  high_level_go_to(goto_info[0][0], goto_info[0][1], goto_info[0][2]);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
-  high_level_stock(ARM_FRONT, true);
+  high_level_stock(ARM_FRONT_LEFT, true);
+  
+  high_level_go_to(goto_info[1][0], goto_info[1][1], goto_info[1][2]);
+  high_level_grip_box(distance_arm0_platform, -1, 0, true);
+  high_level_stock(ARM_FRONT_RIGHT, true);
+  
+  high_level_go_to(goto_info[2][0], goto_info[2][1], goto_info[2][2]);
+  high_level_grip_box(distance_arm0_platform, -1, 0, true);
   // high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
   // high_level_grip_box(distance_arm0_platform, 0, 0, false);
   
