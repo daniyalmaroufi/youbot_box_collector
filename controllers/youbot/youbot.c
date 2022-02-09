@@ -39,6 +39,9 @@ double distance_arm0_platform = 0.2;
 double distance_arm0_robot_center = 0.189;
 
 int stored_boxes[2]={0,0};
+int picked_boxes_count=0;
+int picked_boxes_color[3]={RED_COLOR,RED_COLOR,RED_COLOR};
+
 
 
 double get_box_pos_y(int color){
@@ -150,14 +153,16 @@ static void place_box(int color){
 }
 
 static void place_all_boxes(){
-  place_box(RED_COLOR);
-  high_level_stock(ARM_FRONT_RIGHT, false);
+  while(picked_boxes_count>1){
+    place_box(RED_COLOR);
+    high_level_stock(ARM_FRONT_RIGHT, false);
+    picked_boxes_count-=1;
+  }
   place_box(BLUE_COLOR);
-  high_level_stock(ARM_FRONT_LEFT, false);
-  place_box(BLUE_COLOR);
+  picked_boxes_count=0;
 }
 
-static void automatic_behavior() {
+static void automatic_behavior(WbDeviceTag kinect_color) {
   double delta = distance_arm0_platform + distance_arm0_robot_center;
   
   double goto_info[3][3] = {{0.75-delta, 0, -M_PI_2},
@@ -168,14 +173,19 @@ static void automatic_behavior() {
 
   high_level_go_to(goto_info[0][0], goto_info[0][1], goto_info[0][2]);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
+  const unsigned char *image = wb_camera_get_image(kinect_color);
+  picked_boxes_color[picked_boxes_count]=what_color(image);
+  picked_boxes_count+=1;
   high_level_stock(ARM_FRONT_LEFT, true);
   
   high_level_go_to(goto_info[1][0], goto_info[1][1], goto_info[1][2]);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
+  picked_boxes_count+=1;
   high_level_stock(ARM_FRONT_RIGHT, true);
   
   high_level_go_to(goto_info[2][0], goto_info[2][1], goto_info[2][2]);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
+  picked_boxes_count+=1;
 
   place_all_boxes();
 
