@@ -43,11 +43,10 @@ int stored_blue_boxes=0;
 
 double get_box_pos_y(int color){
   if(color==RED_COLOR)
-    return 0.7-stored_red_boxes*0.75;
+    return 0.7-stored_red_boxes*0.075;
   else
-    return -0.7+stored_blue_boxes*0.75;
+    return -0.7+stored_blue_boxes*0.075;
 }
-
 
 static void step() {
   if (wb_robot_step(TIME_STEP) == -1) {
@@ -154,6 +153,18 @@ static void automatic_behavior() {
   
   high_level_go_to(goto_info[2][0], goto_info[2][1], goto_info[2][2]);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
+
+  high_level_go_to(-2+delta,get_box_pos_y(RED_COLOR),M_PI_2);
+  high_level_grip_box(distance_arm0_platform, -1, 0, false);
+  stored_red_boxes+=1;
+  high_level_stock(ARM_FRONT_RIGHT, false);
+  high_level_go_to(-2+delta,get_box_pos_y(RED_COLOR),M_PI_2);
+  high_level_grip_box(distance_arm0_platform, -1, 0, false);
+  stored_red_boxes+=1;
+  high_level_stock(ARM_FRONT_LEFT, false);
+  high_level_go_to(-2+delta,get_box_pos_y(RED_COLOR),M_PI_2);
+  high_level_grip_box(distance_arm0_platform, -1, 0, false);
+  stored_red_boxes+=1;
   // high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
   // high_level_grip_box(distance_arm0_platform, 0, 0, false);
   
