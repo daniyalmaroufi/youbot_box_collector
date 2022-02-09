@@ -60,9 +60,9 @@ static void high_level_go_to(double x, double y, double a) {
 static void high_level_grip_box(double y, int level, int column, bool grip) {
   static double h_per_step = 0.002;
   static double box_length = 0.05;
-  static double box_gap = 0.01;
-  static double platform_height = 0.045;
-  static double offset = 0.01;  // security margin
+  static double box_gap = 0.005;
+  static double platform_height = 0.04;
+  static double offset = 0.02;  // security margin
 
   double x = 0.5 * column * (box_gap + box_length);
   double z = offset + platform_height + (level + 1) * box_length;
@@ -130,7 +130,7 @@ static void automatic_behavior() {
 
   high_level_go_to(goto_info[0][0]-distance_arm0_platform-distance_arm0_robot_center, goto_info[0][1], goto_info[0][2]);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
-
+  high_level_stock(ARM_FRONT, true);
   // high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
   // high_level_grip_box(distance_arm0_platform, 0, 0, false);
   
