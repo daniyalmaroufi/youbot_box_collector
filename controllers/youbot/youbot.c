@@ -150,8 +150,8 @@ static void high_level_stock(int o, bool stock) {
 }
 
 static void pick_box(WbDeviceTag kinect_color){
-  high_level_grip_box(distance_arm0_platform, -1, 0, true);
   picked_boxes_color[picked_boxes_count]=what_color(kinect_color);
+  high_level_grip_box(distance_arm0_platform, -1, 0, true);
   picked_boxes_count+=1;
 }
 
@@ -162,12 +162,11 @@ static void place_box(int color){
 }
 
 static void place_all_boxes(){
-  while(picked_boxes_count>1){
-    place_box(RED_COLOR);
-    high_level_stock(ARM_FRONT_RIGHT, false);
-    picked_boxes_count-=1;
-  }
-  place_box(BLUE_COLOR);
+  place_box(picked_boxes_color[2]);
+  high_level_stock(ARM_FRONT_RIGHT, false);
+  place_box(picked_boxes_color[1]);
+  high_level_stock(ARM_FRONT_LEFT, false);
+  place_box(picked_boxes_color[0]);
   picked_boxes_count=0;
 }
 
