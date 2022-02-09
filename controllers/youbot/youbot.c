@@ -61,7 +61,7 @@ static void high_level_grip_box(double y, int level, int column, bool grip) {
   static double h_per_step = 0.002;
   static double box_length = 0.05;
   static double box_gap = 0.01;
-  static double platform_height = 0.01;
+  static double platform_height = 0.045;
   static double offset = 0.01;  // security margin
 
   double x = 0.5 * column * (box_gap + box_length);
@@ -119,66 +119,21 @@ static void automatic_behavior() {
   double distance_arm0_platform = 0.2;
   double distance_arm0_robot_center = 0.189;
   double distance_origin_platform = 1.0;
-  double angles[3] = {0.0, 2.0 * M_PI / 3.0, -2.0 * M_PI / 3.0};
-  int GOTO_SRC = 0, GOTO_TMP = 1, GOTO_DST = 2;
-
-  double delta = distance_origin_platform - distance_arm0_platform - distance_arm0_robot_center;
-  double goto_info[3][3] = {{delta * sin(angles[0]), delta * cos(angles[0]), -angles[0]},
-                            {delta * sin(angles[1]), delta * cos(angles[1]), -angles[1]},
-                            {delta * sin(angles[2]), delta * cos(angles[2]), -angles[2]}};
+  // double angles[3] = {0.0, 2.0 * M_PI / 3.0, -2.0 * M_PI / 3.0};
+  // int GOTO_SRC = 0, GOTO_TMP = 1, GOTO_DST = 2;
+  // double delta = distance_origin_platform - distance_arm0_platform - distance_arm0_robot_center;
+  
+  double goto_info[3][3] = {{0.75, 0, -M_PI_2},
+                            {-0.943, 1.792, 0}};
 
   arm_set_height(ARM_HANOI_PREPARE);
-  // SRC A1 => DST
-  high_level_go_to(goto_info[GOTO_SRC][0], goto_info[GOTO_SRC][1], goto_info[GOTO_SRC][2]);
-  high_level_grip_box(distance_arm0_platform, 2, 0, true);
-  high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
-  high_level_grip_box(distance_arm0_platform, 0, 0, false);
-  // SRC B1 & B2 => TMP
-  high_level_go_to(goto_info[GOTO_SRC][0], goto_info[GOTO_SRC][1], goto_info[GOTO_SRC][2]);
-  high_level_grip_box(distance_arm0_platform, 1, 1, true);
-  high_level_stock(ARM_FRONT, true);
-  high_level_grip_box(distance_arm0_platform, 1, -1, true);
-  high_level_go_to(goto_info[GOTO_TMP][0], goto_info[GOTO_TMP][1], goto_info[GOTO_TMP][2]);
-  high_level_grip_box(distance_arm0_platform, 0, -1, false);
-  high_level_stock(ARM_FRONT, false);
-  high_level_grip_box(distance_arm0_platform, 0, 1, false);
-  // DST A1 => TMP
-  high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
-  high_level_grip_box(distance_arm0_platform, 0, 0, true);
-  high_level_go_to(goto_info[GOTO_TMP][0], goto_info[GOTO_TMP][1], goto_info[GOTO_TMP][2]);
-  high_level_grip_box(distance_arm0_platform, 1, 0, false);
-  // SRC C1-C2-C3 => DST
-  high_level_go_to(goto_info[GOTO_SRC][0], goto_info[GOTO_SRC][1], goto_info[GOTO_SRC][2]);
-  high_level_grip_box(distance_arm0_platform, 0, -2, true);
-  high_level_stock(ARM_FRONT_LEFT, true);
-  high_level_grip_box(distance_arm0_platform, 0, 0, true);
-  high_level_stock(ARM_FRONT_RIGHT, true);
-  high_level_grip_box(distance_arm0_platform, 0, 2, true);
-  high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
-  high_level_grip_box(distance_arm0_platform, 0, 2, false);
-  high_level_stock(ARM_FRONT_RIGHT, false);
-  high_level_grip_box(distance_arm0_platform, 0, 0, false);
-  high_level_stock(ARM_FRONT_LEFT, false);
-  high_level_grip_box(distance_arm0_platform, 0, -2, false);
-  // TMP A1 => SRC
-  high_level_go_to(goto_info[GOTO_TMP][0], goto_info[GOTO_TMP][1], goto_info[GOTO_TMP][2]);
-  high_level_grip_box(distance_arm0_platform, 1, 0, true);
-  high_level_go_to(goto_info[GOTO_SRC][0], goto_info[GOTO_SRC][1], goto_info[GOTO_SRC][2]);
-  high_level_grip_box(distance_arm0_platform, 0, 0, false);
-  // TMP B1 & B2 => DST
-  high_level_go_to(goto_info[GOTO_TMP][0], goto_info[GOTO_TMP][1], goto_info[GOTO_TMP][2]);
-  high_level_grip_box(distance_arm0_platform, 0, 1, true);
-  high_level_stock(ARM_FRONT, true);
-  high_level_grip_box(distance_arm0_platform, 0, -1, true);
-  high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
-  high_level_grip_box(distance_arm0_platform, 1, -1, false);
-  high_level_stock(ARM_FRONT, false);
-  high_level_grip_box(distance_arm0_platform, 1, 1, false);
-  // SRC A1 => DST
-  high_level_go_to(goto_info[GOTO_SRC][0], goto_info[GOTO_SRC][1], goto_info[GOTO_SRC][2]);
-  high_level_grip_box(distance_arm0_platform, 0, 0, true);
-  high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
-  high_level_grip_box(distance_arm0_platform, 2, 0, false);
+
+  high_level_go_to(goto_info[0][0]-distance_arm0_platform-distance_arm0_robot_center, goto_info[0][1], goto_info[0][2]);
+  high_level_grip_box(distance_arm0_platform, -1, 0, true);
+
+  // high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
+  // high_level_grip_box(distance_arm0_platform, 0, 0, false);
+  
   // end behavior
   arm_reset();
   high_level_go_to(0.0, 0.0, 0.0);
