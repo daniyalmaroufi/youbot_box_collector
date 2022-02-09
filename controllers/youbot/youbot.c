@@ -34,6 +34,21 @@
 
 #define TIME_STEP 32
 
+#define RED_COLOR 0
+#define BLUE_COLOR 1
+
+int stored_red_boxes=0;
+int stored_blue_boxes=0;
+
+
+double get_box_pos_y(int color){
+  if(color==RED_COLOR)
+    return 0.7-stored_red_boxes*0.75;
+  else
+    return -0.7+stored_blue_boxes*0.75;
+}
+
+
 static void step() {
   if (wb_robot_step(TIME_STEP) == -1) {
     wb_robot_cleanup();
@@ -76,7 +91,7 @@ static void high_level_grip_box(double y, int level, int column, bool grip) {
   arm_ik(x, y, 0.20);
   if (grip)
     gripper_release();
-  passive_wait(1.0);
+  passive_wait(0.5);
 
   // move the arm down
   double h;
