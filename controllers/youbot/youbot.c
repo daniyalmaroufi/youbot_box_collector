@@ -37,15 +37,16 @@
 #define RED_COLOR 0
 #define BLUE_COLOR 1
 
-int stored_red_boxes=0;
-int stored_blue_boxes=0;
+double distance_arm0_platform = 0.2;
+double distance_arm0_robot_center = 0.189;
+
+int stored_boxes[2]={0,0};
 
 
 double get_box_pos_y(int color){
   if(color==RED_COLOR)
-    return 0.7-stored_red_boxes*0.075;
-  else
-    return -0.7+stored_blue_boxes*0.075;
+    return 0.7-stored_boxes[color]*0.075;
+  return -0.7+stored_boxes[color]*0.075;
 }
 
 static void step() {
@@ -129,12 +130,13 @@ static void high_level_stock(int o, bool stock) {
   passive_wait(3.0);
 }
 
+static void place_box(int color){
+  high_level_go_to(-1.611,get_box_pos_y(color),M_PI_2);
+  high_level_grip_box(distance_arm0_platform, -1, 0, false);
+  stored_boxes[color]+=1;
+}
+
 static void automatic_behavior() {
-  double distance_arm0_platform = 0.2;
-  double distance_arm0_robot_center = 0.189;
-  // double distance_origin_platform = 1.0;
-  // double angles[3] = {0.0, 2.0 * M_PI / 3.0, -2.0 * M_PI / 3.0};
-  // int GOTO_SRC = 0, GOTO_TMP = 1, GOTO_DST = 2;
   double delta = distance_arm0_platform + distance_arm0_robot_center;
   
   double goto_info[3][3] = {{0.75-delta, 0, -M_PI_2},
@@ -154,23 +156,18 @@ static void automatic_behavior() {
   high_level_go_to(goto_info[2][0], goto_info[2][1], goto_info[2][2]);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
 
-  high_level_go_to(-2+delta,get_box_pos_y(RED_COLOR),M_PI_2);
-  high_level_grip_box(distance_arm0_platform, -1, 0, false);
-  stored_red_boxes+=1;
+  place_box(RED_COLOR);
   high_level_stock(ARM_FRONT_RIGHT, false);
-  high_level_go_to(-2+delta,get_box_pos_y(RED_COLOR),M_PI_2);
-  high_level_grip_box(distance_arm0_platform, -1, 0, false);
-  stored_red_boxes+=1;
+  place_box(BLUE_COLOR);
   high_level_stock(ARM_FRONT_LEFT, false);
-  high_level_go_to(-2+delta,get_box_pos_y(RED_COLOR),M_PI_2);
-  high_level_grip_box(distance_arm0_platform, -1, 0, false);
-  stored_red_boxes+=1;
+  place_box(BLUE_COLOR);
+
   // high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
   // high_level_grip_box(distance_arm0_platform, 0, 0, false);
   
   // end behavior
   arm_reset();
-  high_level_go_to(0.0, 0.0, 0.0);
+  high_level_go_to(0.0, 0.0, -M_PI_2);
 }
 
 int main(int argc, char **argv) {
@@ -186,7 +183,7 @@ int main(int argc, char **argv) {
   wb_camera_enable(kinect_color, TIME_STEP);
   wb_range_finder_enable(kinect_range, TIME_STEP);
 
-  passive_wait(2.0);
+  passive_wait(1.0);
 
   automatic_behavior();
 

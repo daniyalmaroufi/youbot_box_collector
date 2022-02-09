@@ -8,4 +8,4 @@ orthographicViewHeight: 1
 textFiles: 0 "controllers/youbot/youbot.c"
 consoles: Console:All:All
 renderingDevicePerspectives: youBot:kinect color;1;0.452632;0;0
-renderingDevicePerspectives: youBot:kinect range;1;0.453125;0.158234;0
+renderingDevicePerspectives: youBot:kinect range;1;0.453125;0.191271;0
