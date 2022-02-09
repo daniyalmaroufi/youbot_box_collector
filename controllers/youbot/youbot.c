@@ -15,9 +15,7 @@
  */
 
 /*
- * Description:   Start with a predefined behavior and then
- *                read the user keyboard inputs to actuate the
- *                robot
+ * Description:   Collect all boxes and place them on the plate
  */
 
 #include <webots/camera.h>
@@ -54,6 +52,21 @@ static void step() {
     wb_robot_cleanup();
     exit(EXIT_SUCCESS);
   }
+}
+
+int what_color(const unsigned char *image){
+  int red = 0;
+  int blue = 0;
+
+  for (int i = width / 3; i < 2 * width / 3; i++)
+    for (int j = 7 * height / 8; j < height; j++) {
+      red += wb_camera_image_get_red(image, width, i, j);
+      blue += wb_camera_image_get_blue(image, width, i, j);
+    }
+
+  if (red > 3 * blue)
+    return RED_COLOR;
+  return BLUE_COLOR;
 }
 
 static void passive_wait(double sec) {
@@ -136,6 +149,14 @@ static void place_box(int color){
   stored_boxes[color]+=1;
 }
 
+static void place_all_boxes(){
+  place_box(RED_COLOR);
+  high_level_stock(ARM_FRONT_RIGHT, false);
+  place_box(BLUE_COLOR);
+  high_level_stock(ARM_FRONT_LEFT, false);
+  place_box(BLUE_COLOR);
+}
+
 static void automatic_behavior() {
   double delta = distance_arm0_platform + distance_arm0_robot_center;
   
@@ -156,11 +177,7 @@ static void automatic_behavior() {
   high_level_go_to(goto_info[2][0], goto_info[2][1], goto_info[2][2]);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
 
-  place_box(RED_COLOR);
-  high_level_stock(ARM_FRONT_RIGHT, false);
-  place_box(BLUE_COLOR);
-  high_level_stock(ARM_FRONT_LEFT, false);
-  place_box(BLUE_COLOR);
+  place_all_boxes();
 
   // high_level_go_to(goto_info[GOTO_DST][0], goto_info[GOTO_DST][1], goto_info[GOTO_DST][2]);
   // high_level_grip_box(distance_arm0_platform, 0, 0, false);
