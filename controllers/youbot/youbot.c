@@ -151,6 +151,11 @@ static void pick_box(WbDeviceTag kinect_color){
   picked_boxes_color[picked_boxes_count]=what_color(kinect_color);
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
   picked_boxes_count+=1;
+  if(picked_boxes_count==1)
+    high_level_stock(ARM_FRONT_LEFT, true);
+  else if(picked_boxes_count==2)
+    high_level_stock(ARM_FRONT_RIGHT, true);
+
 }
 
 static void place_box(int color){
@@ -179,11 +184,9 @@ static void automatic_behavior(WbDeviceTag kinect_color) {
 
   high_level_go_to(goto_info[0][0], goto_info[0][1], goto_info[0][2]);
   pick_box(kinect_color);
-  high_level_stock(ARM_FRONT_LEFT, true);
   
   high_level_go_to(goto_info[1][0], goto_info[1][1], goto_info[1][2]);
   pick_box(kinect_color);
-  high_level_stock(ARM_FRONT_RIGHT, true);
   
   high_level_go_to(goto_info[2][0], goto_info[2][1], goto_info[2][2]);
   pick_box(kinect_color);
