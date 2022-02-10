@@ -167,16 +167,21 @@ static void place_box(int color){
   high_level_go_to(-1.611,get_box_pos_y(color),M_PI_2);
   high_level_grip_box(distance_arm0_platform, -1, 0, false);
   stored_boxes[color]+=1;
+  picked_boxes_count-=1;
 }
 
 static void place_all_boxes(double current_pos[3]){
   turn_around(current_pos[0],current_pos[1],M_PI_2);
-  place_box(picked_boxes_color[2]);
-  high_level_stock(ARM_FRONT_RIGHT, false);
-  place_box(picked_boxes_color[1]);
-  high_level_stock(ARM_FRONT_LEFT, false);
-  place_box(picked_boxes_color[0]);
-  picked_boxes_count=0;
+  if(picked_boxes_count==3)
+    place_box(picked_boxes_color[2]);
+  if(picked_boxes_count==2){
+    high_level_stock(ARM_FRONT_RIGHT, false);
+    place_box(picked_boxes_color[1]);
+  }
+  if(picked_boxes_count==1){
+    high_level_stock(ARM_FRONT_LEFT, false);
+    place_box(picked_boxes_color[0]);
+  }
 }
 
 static void automatic_behavior(WbDeviceTag kinect_color) {
