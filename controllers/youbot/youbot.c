@@ -175,24 +175,24 @@ static void place_all_boxes(){
 
 static void automatic_behavior(WbDeviceTag kinect_color) {
   double delta = distance_arm0_platform + distance_arm0_robot_center;
-  
+
+  int n_boxes=3;
   double goto_info[3][3] = {{0.75-delta, 0, -M_PI_2},
                             {1-delta,-0.349, -M_PI_2},
                             {-0.943, 1.792-delta, 0}};
 
   arm_set_height(ARM_HANOI_PREPARE);
 
-  high_level_go_to(goto_info[0][0], goto_info[0][1], goto_info[0][2]);
-  pick_box(kinect_color);
+  for (int i = 0; i < n_boxes; i++)
+  {
+    high_level_go_to(goto_info[i][0], goto_info[i][1], goto_info[i][2]);
+    pick_box(kinect_color);
+    if(picked_boxes_count==3 || i==n_boxes-1){
+      place_all_boxes();
+    }
+  }
   
-  high_level_go_to(goto_info[1][0], goto_info[1][1], goto_info[1][2]);
-  pick_box(kinect_color);
   
-  high_level_go_to(goto_info[2][0], goto_info[2][1], goto_info[2][2]);
-  pick_box(kinect_color);
-
-  place_all_boxes();
-
   arm_reset();
   high_level_go_to(0.0, 0.0, -M_PI_2);
 }
