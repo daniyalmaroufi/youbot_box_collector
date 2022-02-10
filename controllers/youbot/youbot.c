@@ -38,6 +38,7 @@
 double distance_arm0_platform = 0.2;
 double distance_arm0_robot_center = 0.189;
 
+int n_boxes=11;
 int stored_boxes[2]={0,0};
 int picked_boxes_count=0;
 int picked_boxes_color[3]={RED_COLOR,RED_COLOR,RED_COLOR};
@@ -89,10 +90,14 @@ static void high_level_go_to(double x, double y, double a) {
   base_reset();
 }
 
+static void turn_around(double x, double y,double direction) {
+  high_level_go_to(x, y, direction);
+}
+
 static void high_level_grip_box(double y, int level, int column, bool grip) {
   static double h_per_step = 0.002;
   static double box_length = 0.05;
-  static double box_gap = 0.005;
+  static double box_gap = 0.002;
   static double platform_height = 0.04;
   static double offset = 0.02;  // security margin
 
@@ -164,7 +169,8 @@ static void place_box(int color){
   stored_boxes[color]+=1;
 }
 
-static void place_all_boxes(){
+static void place_all_boxes(double current_pos[3]){
+  turn_around(current_pos[0],current_pos[1],M_PI_2);
   place_box(picked_boxes_color[2]);
   high_level_stock(ARM_FRONT_RIGHT, false);
   place_box(picked_boxes_color[1]);
@@ -176,23 +182,33 @@ static void place_all_boxes(){
 static void automatic_behavior(WbDeviceTag kinect_color) {
   double delta = distance_arm0_platform + distance_arm0_robot_center;
 
-  int n_boxes=3;
-  double goto_info[3][3] = {{0.75-delta, 0, -M_PI_2},
-                            {1-delta,-0.349, -M_PI_2},
-                            {-0.943, 1.792-delta, 0}};
+  double goto_info[11][3] = { {0.75-delta, 0, -M_PI_2},
+                              {1-delta,-0.349, -M_PI_2},
+                              {-0.943, 1.792-delta, 0},
+                              {-1.978, 2-delta, 0},
+                              {0.465, 2-delta, 0},
+                              {1.648-delta, 1.19, -M_PI_2},
+                              {1.349-delta, -0.981, -M_PI_2},
+                              {2-delta, -1.6, -M_PI_2},
+                              {2.125-delta, 0.75, -M_PI_2},
+                              {-0.75, -1.745+delta, M_PI},
+                              {-1.648, -2.19+delta, M_PI}};
 
   arm_set_height(ARM_HANOI_PREPARE);
 
   for (int i = 0; i < n_boxes; i++)
   {
+
     high_level_go_to(goto_info[i][0], goto_info[i][1], goto_info[i][2]);
     pick_box(kinect_color);
     if(picked_boxes_count==3 || i==n_boxes-1){
-      place_all_boxes();
+      place_all_boxes(goto_info[i]);
+      if(i<n_boxes-1)
+        turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),goto_info[i+1][2]);
     }
   }
-  
-  
+
+
   arm_reset();
   high_level_go_to(0.0, 0.0, -M_PI_2);
 }
