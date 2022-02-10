@@ -160,7 +160,6 @@ static void pick_box(WbDeviceTag kinect_color){
     high_level_stock(ARM_FRONT_LEFT, true);
   else if(picked_boxes_count==2)
     high_level_stock(ARM_FRONT_RIGHT, true);
-
 }
 
 static void place_box(int color){
@@ -203,7 +202,6 @@ static void automatic_behavior(WbDeviceTag kinect_color) {
 
   for (int i = 0; i < n_boxes; i++)
   {
-
     high_level_go_to(goto_info[i][0], goto_info[i][1], goto_info[i][2]);
     pick_box(kinect_color);
     if(picked_boxes_count==3 || i==n_boxes-1){
@@ -212,7 +210,6 @@ static void automatic_behavior(WbDeviceTag kinect_color) {
         turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),goto_info[i+1][2]);
     }
   }
-
 
   arm_reset();
   high_level_go_to(0.0, 0.0, -M_PI_2);
