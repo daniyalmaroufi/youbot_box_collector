@@ -18,32 +18,41 @@
  * Description:   Collect all boxes and place them on the plate
  */
 
+// Webots Libraries
 #include <webots/camera.h>
 #include <webots/lidar.h>
 #include <webots/range_finder.h>
 #include <webots/robot.h>
 #include <webots/compass.h>
+#include <webots/distance_sensor.h>
 
+// Youbot Libraries
 #include <arm.h>
 #include <base.h>
 #include <gripper.h>
 #include <tiny_math.h>
 
+// Standard libraries
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+// Devices
+static WbDeviceTag kinect_color;
+static WbDeviceTag kinect_range;
+static WbDeviceTag lidar;
 static WbDeviceTag compass;
+static WbDeviceTag ds;
 
+// Constants
 #define TIME_STEP 32
-
 #define RED_COLOR 0
 #define BLUE_COLOR 1
-
 double distance_arm0_platform = 0.2;
 double distance_arm0_robot_center = 0.189;
-
 int n_boxes=11;
+
+// Global variables
 int stored_boxes[2]={0,0};
 int picked_boxes_count=0;
 int picked_boxes_color[3]={RED_COLOR,RED_COLOR,RED_COLOR};
@@ -61,7 +70,7 @@ static void step() {
   }
 }
 
-int what_color(WbDeviceTag kinect_color){
+int what_color(){
   const unsigned char *image = wb_camera_get_image(kinect_color);
   int width = wb_camera_get_width(kinect_color);
   int height = wb_camera_get_height(kinect_color);
@@ -195,8 +204,8 @@ static void high_level_stock(int o, bool stock) {
   passive_wait(3.0);
 }
 
-static void pick_box(WbDeviceTag kinect_color){
-  picked_boxes_color[picked_boxes_count]=what_color(kinect_color);
+static void pick_box(){
+  picked_boxes_color[picked_boxes_count]=what_color();
   high_level_grip_box(distance_arm0_platform, -1, 0, true);
   picked_boxes_count+=1;
   if(picked_boxes_count==1)
@@ -226,7 +235,7 @@ static void place_all_boxes(double current_pos[3]){
   }
 }
 
-bool find_object(WbDeviceTag lidar){
+bool find_object(){
   const float *range_image;
   double sec = 13;
   double start_time = wb_robot_get_time();
@@ -243,7 +252,7 @@ bool find_object(WbDeviceTag lidar){
   return false;
 }
 
-static void automatic_behavior(WbDeviceTag kinect_color, WbDeviceTag lidar) {
+static void automatic_behavior() {
 
   double goto_info[11][2] = { {0.75, 0},
                               {1.0,-0.349},
@@ -259,10 +268,10 @@ static void automatic_behavior(WbDeviceTag kinect_color, WbDeviceTag lidar) {
 
   arm_set_height(ARM_HANOI_PREPARE);
 
-  if(!find_object(lidar)){
+  if(!find_object()){
     // go to a loop of other searching points
     high_level_go_to(0.0, 0.0, -M_PI_2);
-    find_object(lidar);
+    find_object();
     high_level_go_to(-1.5, 0.0, get_compass_angle());
   }else{
     // a box found. go and pick it
@@ -278,7 +287,7 @@ static void automatic_behavior(WbDeviceTag kinect_color, WbDeviceTag lidar) {
     target_pos[2]=alpha;
 
     high_level_go_to(target_pos[0], target_pos[1], target_pos[2]);
-    pick_box(kinect_color);
+    pick_box();
     if(picked_boxes_count==3 || i==n_boxes-1){
       place_all_boxes(target_pos);
       if(i<n_boxes-1)
@@ -298,20 +307,22 @@ int main(int argc, char **argv) {
   arm_init();
   gripper_init();
 
-  WbDeviceTag kinect_color = wb_robot_get_device("kinect color");
-  WbDeviceTag kinect_range = wb_robot_get_device("kinect range");
-  WbDeviceTag lidar = wb_robot_get_device("lidar");
+  kinect_color = wb_robot_get_device("kinect color");
+  kinect_range = wb_robot_get_device("kinect range");
+  lidar = wb_robot_get_device("lidar");
   compass = wb_robot_get_device("compass");
+  ds = wb_robot_get_device("ds");
 
   wb_camera_enable(kinect_color, TIME_STEP);
   wb_range_finder_enable(kinect_range, TIME_STEP);
   wb_lidar_enable(lidar,TIME_STEP);
   wb_lidar_enable_point_cloud(lidar);
   wb_compass_enable(compass, TIME_STEP);
+  wb_distance_sensor_enable(ds,TIME_STEP);
 
   passive_wait(1.0);
 
-  automatic_behavior(kinect_color, lidar);
+  automatic_behavior();
 
   wb_robot_cleanup();
 
