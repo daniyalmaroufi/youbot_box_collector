@@ -24,7 +24,7 @@
 #include <webots/range_finder.h>
 #include <webots/robot.h>
 #include <webots/compass.h>
-#include <webots/distance_sensor.h>
+#include <webots/gps.h>
 
 // Youbot Libraries
 #include <arm.h>
@@ -42,7 +42,7 @@ static WbDeviceTag kinect_color;
 static WbDeviceTag kinect_range;
 static WbDeviceTag lidar;
 static WbDeviceTag compass;
-static WbDeviceTag ds;
+static WbDeviceTag gps;
 
 // Constants
 #define TIME_STEP 32
@@ -98,7 +98,17 @@ double get_compass_angle(){
 
 double get_distance_of_box(){
   const float *range_image = wb_lidar_get_range_image(lidar);
-  return range_image[0];
+  return range_image[0]+0.28+0.025;
+}
+
+Vector2 get_box_pos(){
+  double distance = get_distance_of_box();
+  double theta = get_compass_angle();
+  const double *gps_raw_values = wb_gps_get_values(gps);
+  Vector2 box_pos;
+  box_pos.u = gps_raw_values[0] - distance*sin(theta);
+  box_pos.v = gps_raw_values[1] + distance*cos(theta);
+  return box_pos;
 }
 
 static void passive_wait(double sec) {
@@ -121,9 +131,9 @@ static void turn_around(double x, double y,double direction) {
   high_level_go_to(x, y, direction);
 }
 
-double box_orientation(double box_pos[2]){
-  if(box_pos[0]<0)
-    if(box_pos[1]<0)
+double box_orientation(Vector2 box_pos){
+  if(box_pos.u<0)
+    if(box_pos.v<0)
       return M_PI;
     else
       return 0;
@@ -131,24 +141,24 @@ double box_orientation(double box_pos[2]){
     return -M_PI_2;
 }
 
-double get_target_pos_x(double box_pos[2], double alpha){
+Vector2 get_target_pos(Vector2 box_pos, double alpha){
   double delta = distance_arm0_platform + distance_arm0_robot_center;
+
+  Vector2 target_pos;
 
   if (alpha == -M_PI_2)
-    return box_pos[0] - delta;
+    target_pos.u = box_pos.u - delta;
   else
-    return box_pos[0];
-}
-
-double get_target_pos_y(double box_pos[2], double alpha){
-  double delta = distance_arm0_platform + distance_arm0_robot_center;
+    target_pos.u = box_pos.u;
 
   if (alpha == M_PI)
-    return box_pos[1] + delta;
+    target_pos.v = box_pos.v + delta;
   else if (alpha == 0)
-    return box_pos[1] - delta;
+    target_pos.v = box_pos.v - delta;
   else
-    return box_pos[1];
+    target_pos.v = box_pos.v;
+
+  return target_pos;
 }
 
 static void high_level_grip_box(double y, int level, int column, bool grip) {
@@ -280,17 +290,14 @@ static void automatic_behavior() {
     // high_level_go_to(-1.5, 0.0, get_compass_angle());
   }
 
-  double distance = get_distance_of_box();
-  double theta = get_compass_angle();
-  double box_pos[2];
-  box_pos[0]=distance*cos(theta);
-  box_pos[1]=distance*sin(theta);
+  Vector2 box_pos = get_box_pos();
 
   double alpha = box_orientation(box_pos);
   double target_pos[3];
-  target_pos[0]=get_target_pos_x(box_pos,alpha);
-  target_pos[1]=get_target_pos_y(box_pos,alpha);
-  target_pos[2]=alpha;
+  Vector2 target = get_target_pos(box_pos,alpha);
+  target_pos[0] = target.u;
+  target_pos[1] = target.v;
+  target_pos[2] = alpha;
 
 
   high_level_go_to(target_pos[0], target_pos[1], target_pos[2]);
@@ -331,14 +338,14 @@ int main(int argc, char **argv) {
   kinect_range = wb_robot_get_device("kinect range");
   lidar = wb_robot_get_device("lidar");
   compass = wb_robot_get_device("compass");
-  ds = wb_robot_get_device("ds");
+  gps = wb_robot_get_device("gps");
 
   wb_camera_enable(kinect_color, TIME_STEP);
   wb_range_finder_enable(kinect_range, TIME_STEP);
   wb_lidar_enable(lidar,TIME_STEP);
   wb_lidar_enable_point_cloud(lidar);
   wb_compass_enable(compass, TIME_STEP);
-  wb_distance_sensor_enable(ds,TIME_STEP);
+  wb_gps_enable(gps, TIME_STEP);
 
   passive_wait(1.0);
 
