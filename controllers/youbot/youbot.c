@@ -97,7 +97,8 @@ double get_compass_angle(){
 }
 
 double get_distance_of_box(){
-  return wb_distance_sensor_get_value(ds);
+  const float *range_image = wb_lidar_get_range_image(lidar);
+  return range_image[0];
 }
 
 static void passive_wait(double sec) {
@@ -282,8 +283,8 @@ static void automatic_behavior() {
   double distance = get_distance_of_box();
   double theta = get_compass_angle();
   double box_pos[2];
-  box_pos[0]=distance*sin(theta);
-  box_pos[1]=distance*cos(theta);
+  box_pos[0]=distance*cos(theta);
+  box_pos[1]=distance*sin(theta);
 
   double alpha = box_orientation(box_pos);
   double target_pos[3];
