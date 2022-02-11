@@ -153,6 +153,17 @@ KukaBox {
 Youbot {
   translation -1 0 0.102838
   bodySlot [
+    DistanceSensor {
+      translation 0.28 0 -0.08
+      rotation 0 1 0 0
+      name "ds"
+    }
+    Lidar {
+      translation 0.28 0 -0.08
+      fieldOfView 0.03
+      numberOfLayers 1
+      maxRange 1.5
+    }
     Kinect {
       translation 0.27 0 -0.02
       rotation 0.5773502691896258 -0.5773502691896258 -0.5773502691896258 2.0944
