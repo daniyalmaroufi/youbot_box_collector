@@ -216,7 +216,7 @@ static void place_all_boxes(double current_pos[3]){
 
 bool find_object(WbDeviceTag lidar){
   const float *range_image;
-  double sec = 13.5;
+  double sec = 13;
   double start_time = wb_robot_get_time();
   do {
     base_turn_left();
@@ -247,14 +247,16 @@ static void automatic_behavior(WbDeviceTag kinect_color, WbDeviceTag lidar) {
 
   arm_set_height(ARM_HANOI_PREPARE);
 
+  if(!find_object(lidar)){
+    // go to a loop of other searching points
+    high_level_go_to(0.0, 0.0, -M_PI_2);
+    find_object(lidar);
+  }else{
+    // a box found. go and pick it
+  }
+
   for (int i = 0; i < n_boxes; i++)
   {
-    if(!find_object(lidar)){
-      // go to another position to find
-    }else{
-      // a box found. go and pick it
-    }
-
     double alpha = box_orientation(goto_info[i]);
 
     double target_pos[3];
