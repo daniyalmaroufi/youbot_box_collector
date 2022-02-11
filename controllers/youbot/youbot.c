@@ -94,7 +94,7 @@ static void turn_around(double x, double y,double direction) {
   high_level_go_to(x, y, direction);
 }
 
-double get_orientation(double box_pos[2]){
+double box_orientation(double box_pos[2]){
   double x=target_pos[0];
   double y=target_pos[1];
   if(x<0)
@@ -104,6 +104,21 @@ double get_orientation(double box_pos[2]){
       return 0;
   else
     return -M_PI_2;
+}
+
+double *get_target_pos(double box_pos[2]){
+  double delta = distance_arm0_platform + distance_arm0_robot_center;
+  double alpha = box_orientation(box_pos);
+
+  double target_pos[3];
+  target_pos[2] = alpha;
+
+  if (alpha == -M_PI_2)  target_pos[0] = box_pos[0] - delta;
+  else if (alpha == M_PI)  target_pos[1] = box_pos[1] + delta;
+  else if (alpha == 0)  target_pos[1] = box_pos[1] - delta;
+  else target_pos[0] = box_pos[1] - delta;
+
+  return target_pos;
 }
 
 static void high_level_grip_box(double y, int level, int column, bool grip) {
