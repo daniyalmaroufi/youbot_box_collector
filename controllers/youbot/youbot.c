@@ -96,6 +96,10 @@ double get_compass_angle(){
   return theta;
 }
 
+double get_distance_of_box(){
+  return wb_distance_sensor_get_value(ds);
+}
+
 static void passive_wait(double sec) {
   double start_time = wb_robot_get_time();
   do {
@@ -272,28 +276,43 @@ static void automatic_behavior() {
     // go to a loop of other searching points
     high_level_go_to(0.0, 0.0, -M_PI_2);
     find_object();
-    high_level_go_to(-1.5, 0.0, get_compass_angle());
-  }else{
-    // a box found. go and pick it
+    // high_level_go_to(-1.5, 0.0, get_compass_angle());
   }
 
-  for (int i = 0; i < n_boxes; i++)
-  {
-    double alpha = box_orientation(goto_info[i]);
+  double distance = get_distance_of_box();
+  double theta = get_compass_angle();
+  double box_pos[2];
+  box_pos[0]=distance*sin(theta);
+  box_pos[1]=distance*cos(theta);
 
-    double target_pos[3];
-    target_pos[0]=get_target_pos_x(goto_info[i],alpha);
-    target_pos[1]=get_target_pos_y(goto_info[i],alpha);
-    target_pos[2]=alpha;
+  double alpha = box_orientation(box_pos);
+  double target_pos[3];
+  target_pos[0]=get_target_pos_x(box_pos,alpha);
+  target_pos[1]=get_target_pos_y(box_pos,alpha);
+  target_pos[2]=alpha;
 
-    high_level_go_to(target_pos[0], target_pos[1], target_pos[2]);
-    pick_box();
-    if(picked_boxes_count==3 || i==n_boxes-1){
-      place_all_boxes(target_pos);
-      if(i<n_boxes-1)
-        turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),box_orientation(goto_info[i+1]));
-    }
-  }
+
+  high_level_go_to(target_pos[0], target_pos[1], target_pos[2]);
+  pick_box();
+
+  // for (int i = 0; i < n_boxes; i++)
+  // {
+  //   double box_pos[2] = goto_info[i];
+  //   double alpha = box_orientation(box_pos);
+
+  //   double target_pos[3];
+  //   target_pos[0]=get_target_pos_x(box_pos,alpha);
+  //   target_pos[1]=get_target_pos_y(box_pos,alpha);
+  //   target_pos[2]=alpha;
+
+  //   high_level_go_to(target_pos[0], target_pos[1], target_pos[2]);
+  //   pick_box();
+  //   if(picked_boxes_count==3 || i==n_boxes-1){
+  //     place_all_boxes(target_pos);
+  //     if(i<n_boxes-1)
+  //       turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),box_orientation(goto_info[i+1]));
+  //   }
+  // }
 
   arm_reset();
   high_level_go_to(0.0, 0.0, -M_PI_2);
