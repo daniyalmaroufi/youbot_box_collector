@@ -214,16 +214,24 @@ static void place_all_boxes(double current_pos[3]){
   }
 }
 
-void find_object(WbDeviceTag lidar){
-  
+bool find_object(WbDeviceTag lidar){
   const float *range_image;
-  range_image = wb_lidar_get_range_image(lidar);
-  if(range_image){
-    base_forwards();
-  }
+  double sec = 13.5;
+  double start_time = wb_robot_get_time();
+  do {
+    base_turn_left();
+    range_image = wb_lidar_get_range_image(lidar);
+    if (range_image[0]<1){
+      base_reset();
+      return true;
+    }
+    step();
+  } while (start_time + sec > wb_robot_get_time());
+  base_reset();
+  return false;
 }
 
-static void automatic_behavior(WbDeviceTag kinect_color) {
+static void automatic_behavior(WbDeviceTag kinect_color, WbDeviceTag lidar) {
 
   double goto_info[11][2] = { {0.75, 0},
                               {1.0,-0.349},
@@ -241,6 +249,12 @@ static void automatic_behavior(WbDeviceTag kinect_color) {
 
   for (int i = 0; i < n_boxes; i++)
   {
+    if(!find_object(lidar)){
+      // go to another position to find
+    }else{
+      // a box found. go and pick it
+    }
+
     double alpha = box_orientation(goto_info[i]);
 
     double target_pos[3];
@@ -279,7 +293,7 @@ int main(int argc, char **argv) {
 
   passive_wait(1.0);
 
-  automatic_behavior(kinect_color);
+  automatic_behavior(kinect_color, lidar);
 
   wb_robot_cleanup();
 
