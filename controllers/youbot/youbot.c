@@ -22,14 +22,18 @@
 #include <webots/lidar.h>
 #include <webots/range_finder.h>
 #include <webots/robot.h>
+#include <webots/compass.h>
 
 #include <arm.h>
 #include <base.h>
 #include <gripper.h>
+#include <tiny_math.h>
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+static WbDeviceTag compass;
 
 #define TIME_STEP 32
 
@@ -73,6 +77,14 @@ int what_color(WbDeviceTag kinect_color){
   if (red > 3 * blue)
     return RED_COLOR;
   return BLUE_COLOR;
+}
+
+double get_compass_angle(){
+  const double *compass_raw_values = wb_compass_get_values(compass);
+  Vector2 v_front = {compass_raw_values[0], compass_raw_values[1]};
+  Vector2 v_north = {1.0, 0.0};
+  double theta = vector2_angle(&v_front, &v_north);
+  return theta;
 }
 
 static void passive_wait(double sec) {
@@ -251,6 +263,7 @@ static void automatic_behavior(WbDeviceTag kinect_color, WbDeviceTag lidar) {
     // go to a loop of other searching points
     high_level_go_to(0.0, 0.0, -M_PI_2);
     find_object(lidar);
+    high_level_go_to(-1.5, 0.0, get_compass_angle());
   }else{
     // a box found. go and pick it
   }
@@ -288,10 +301,13 @@ int main(int argc, char **argv) {
   WbDeviceTag kinect_color = wb_robot_get_device("kinect color");
   WbDeviceTag kinect_range = wb_robot_get_device("kinect range");
   WbDeviceTag lidar = wb_robot_get_device("lidar");
+  compass = wb_robot_get_device("compass");
+
   wb_camera_enable(kinect_color, TIME_STEP);
   wb_range_finder_enable(kinect_range, TIME_STEP);
   wb_lidar_enable(lidar,TIME_STEP);
   wb_lidar_enable_point_cloud(lidar);
+  wb_compass_enable(compass, TIME_STEP);
 
   passive_wait(1.0);
 

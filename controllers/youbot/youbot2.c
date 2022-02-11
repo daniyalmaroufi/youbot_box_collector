@@ -223,27 +223,27 @@ static void find_obj(){
         flag_obj=true;
 }
 
-// static void lidar_goto(){
+static void lidar_goto(){
 
-//     const double *compass_raw_values = wb_compass_get_values(compass);
-//     Vector2 v_front = {compass_raw_values[0], compass_raw_values[1]};
+    const double *compass_raw_values = wb_compass_get_values(compass);
+    Vector2 v_front = {compass_raw_values[0], compass_raw_values[1]};
 
-//     // Vector2 v_right = {-v_front.v, v_front.u};
-//     Vector2 v_north = {1.0, 0.0};
+    // Vector2 v_right = {-v_front.v, v_front.u};
+    Vector2 v_north = {1.0, 0.0};
 
-//     // compute distance
-//     // Vector2 v_dir;
-//     // double distance = vector2_norm(&v_dir);
+    // compute distance
+    // Vector2 v_dir;
+    // double distance = vector2_norm(&v_dir);
 
-//     // compute absolute angle & delta with the delta with the target angle
-//     double theta = vector2_angle(&v_front, &v_north);
+    // compute absolute angle & delta with the delta with the target angle
+    double theta = vector2_angle(&v_front, &v_north);
 
-//   WbDeviceTag ds = wb_robot_get_device("ds");
-//     wb_distance_sensor_enable(ds,TIME_STEP);
-//     double ds_val = wb_distance_sensor_get_value(ds);
+  WbDeviceTag ds = wb_robot_get_device("ds");
+    wb_distance_sensor_enable(ds,TIME_STEP);
+    double ds_val = wb_distance_sensor_get_value(ds);
 
-//     high_level_go_to(ds_val*cos(theta), ds_val*sin(theta), theta);
-// }
+    high_level_go_to(ds_val*cos(theta), ds_val*sin(theta), theta);
+}
 
 
 static void automatic_behavior(WbDeviceTag kinect_color) {
