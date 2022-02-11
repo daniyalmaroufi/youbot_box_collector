@@ -95,10 +95,8 @@ static void turn_around(double x, double y,double direction) {
 }
 
 double box_orientation(double box_pos[2]){
-  double x=target_pos[0];
-  double y=target_pos[1];
-  if(x<0)
-    if(y<0)
+  if(box_pos[0]<0)
+    if(box_pos[1]<0)
       return M_PI;
     else
       return 0;
@@ -106,19 +104,24 @@ double box_orientation(double box_pos[2]){
     return -M_PI_2;
 }
 
-double *get_target_pos(double box_pos[2]){
+double get_target_pos_x(double box_pos[2], double alpha){
   double delta = distance_arm0_platform + distance_arm0_robot_center;
-  double alpha = box_orientation(box_pos);
 
-  double target_pos[3];
-  target_pos[2] = alpha;
+  if (alpha == -M_PI_2)
+    return box_pos[0] - delta;
+  else
+    return box_pos[0];
+}
 
-  if (alpha == -M_PI_2)  target_pos[0] = box_pos[0] - delta;
-  else if (alpha == M_PI)  target_pos[1] = box_pos[1] + delta;
-  else if (alpha == 0)  target_pos[1] = box_pos[1] - delta;
-  else target_pos[0] = box_pos[1] - delta;
+double get_target_pos_y(double box_pos[2], double alpha){
+  double delta = distance_arm0_platform + distance_arm0_robot_center;
 
-  return target_pos;
+  if (alpha == M_PI)
+    return box_pos[1] + delta;
+  else if (alpha == 0)
+    return box_pos[1] - delta;
+  else
+    return box_pos[1];
 }
 
 static void high_level_grip_box(double y, int level, int column, bool grip) {
@@ -211,30 +214,36 @@ static void place_all_boxes(double current_pos[3]){
 }
 
 static void automatic_behavior(WbDeviceTag kinect_color) {
-  double delta = distance_arm0_platform + distance_arm0_robot_center;
 
-  double goto_info[11][3] = { {0.75-delta, 0, -M_PI_2},
-                              {1-delta,-0.349, -M_PI_2},
-                              {-0.943, 1.792-delta, 0},
-                              {-1.978, 2-delta, 0},
-                              {0.465, 2-delta, 0},
-                              {1.648-delta, 1.19, -M_PI_2},
-                              {1.349-delta, -0.981, -M_PI_2},
-                              {2-delta, -1.6, -M_PI_2},
-                              {2.125-delta, 0.75, -M_PI_2},
-                              {-0.75, -1.745+delta, M_PI},
-                              {-1.648, -2.19+delta, M_PI}};
+  double goto_info[11][2] = { {0.75, 0},
+                              {1.0,-0.349},
+                              {-0.943, 1.792},
+                              {-1.978, 2.0},
+                              {0.465, 2.0},
+                              {1.648, 1.19},
+                              {1.349, -0.981},
+                              {2.0, -1.6},
+                              {2.125, 0.75},
+                              {-0.75, -1.745},
+                              {-1.648, -2.19}};
 
   arm_set_height(ARM_HANOI_PREPARE);
 
   for (int i = 0; i < n_boxes; i++)
   {
-    high_level_go_to(goto_info[i][0], goto_info[i][1], goto_info[i][2]);
+    double alpha = box_orientation(goto_info[i]);
+
+    double target_pos[3];
+    target_pos[0]=get_target_pos_x(goto_info[i],alpha);
+    target_pos[1]=get_target_pos_y(goto_info[i],alpha);
+    target_pos[2]=alpha;
+
+    high_level_go_to(target_pos[0], target_pos[1], target_pos[2]);
     pick_box(kinect_color);
     if(picked_boxes_count==3 || i==n_boxes-1){
-      place_all_boxes(goto_info[i]);
+      place_all_boxes(target_pos);
       if(i<n_boxes-1)
-        turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),goto_info[i+1][2]);
+        turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),box_orientation(goto_info[i+1]));
     }
   }
 
