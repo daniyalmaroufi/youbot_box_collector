@@ -19,6 +19,7 @@
  */
 
 #include <webots/camera.h>
+#include <webots/lidar.h>
 #include <webots/range_finder.h>
 #include <webots/robot.h>
 
@@ -213,6 +214,15 @@ static void place_all_boxes(double current_pos[3]){
   }
 }
 
+void find_object(WbDeviceTag lidar){
+  
+  const float *range_image;
+  range_image = wb_lidar_get_range_image(lidar);
+  if(range_image){
+    base_forwards();
+  }
+}
+
 static void automatic_behavior(WbDeviceTag kinect_color) {
 
   double goto_info[11][2] = { {0.75, 0},
@@ -261,8 +271,11 @@ int main(int argc, char **argv) {
 
   WbDeviceTag kinect_color = wb_robot_get_device("kinect color");
   WbDeviceTag kinect_range = wb_robot_get_device("kinect range");
+  WbDeviceTag lidar = wb_robot_get_device("lidar");
   wb_camera_enable(kinect_color, TIME_STEP);
   wb_range_finder_enable(kinect_range, TIME_STEP);
+  wb_lidar_enable(lidar,TIME_STEP);
+  wb_lidar_enable_point_cloud(lidar);
 
   passive_wait(1.0);
 

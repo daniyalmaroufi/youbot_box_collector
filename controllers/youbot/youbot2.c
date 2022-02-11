@@ -211,17 +211,17 @@ static void set_thresh_pos(double goto_info[11][2], int i, double goto_info_alph
 }
 
 
-// static void find_obj(){
+static void find_obj(){
 
-//   WbDeviceTag lidar = wb_robot_get_device("lidar");
-//   wb_lidar_enable(lidar,TIME_STEP);
-//   wb_lidar_enable_point_cloud(lidar);
-//     const float *range_image = wb_lidar_get_range_image(lidar);
-//       while (range_image[0]<1){
-//         rotation();
-//       }
-//         flag_obj=true;
-// }
+  WbDeviceTag lidar = wb_robot_get_device("lidar");
+  wb_lidar_enable(lidar,TIME_STEP);
+  wb_lidar_enable_point_cloud(lidar);
+    const float *range_image = wb_lidar_get_range_image(lidar);
+      while (range_image[0]<1){
+        rotation();
+      }
+        flag_obj=true;
+}
 
 // static void lidar_goto(){
 
