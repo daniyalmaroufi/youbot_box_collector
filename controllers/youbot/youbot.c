@@ -51,6 +51,14 @@ static WbDeviceTag gps;
 double distance_arm0_platform = 0.2;
 double distance_arm0_robot_center = 0.189;
 int n_boxes=11;
+double searching_points[8][2] = { {0.0,0.0},
+                                  {1.75,0.0},
+                                  {-1.6,1.6},
+                                  {0.0,1.6},
+                                  {1.6,1.6},
+                                  {-1.6,-1.6},
+                                  {0.0,-1.6},
+                                  {1.6,-1.6}};
 
 // Global variables
 int stored_boxes[2]={0,0};
@@ -98,7 +106,7 @@ double get_compass_angle(){
 
 double get_distance_of_box(){
   const float *range_image = wb_lidar_get_range_image(lidar);
-  return range_image[0]+0.28+0.025;
+  return range_image[0]+0.286+0.025;
 }
 
 Vector2 get_box_pos(){
@@ -267,60 +275,47 @@ bool find_object(){
   return false;
 }
 
-static void automatic_behavior() {
-
-  double goto_info[11][2] = { {0.75, 0},
-                              {1.0,-0.349},
-                              {-0.943, 1.792},
-                              {-1.978, 2.0},
-                              {0.465, 2.0},
-                              {1.648, 1.19},
-                              {1.349, -0.981},
-                              {2.0, -1.6},
-                              {2.125, 0.75},
-                              {-0.75, -1.745},
-                              {-1.648, -2.19}};
-
-  arm_set_height(ARM_HANOI_PREPARE);
-
-  if(!find_object()){
-    // go to a loop of other searching points
-    high_level_go_to(0.0, 0.0, -M_PI_2);
-    find_object();
-    // high_level_go_to(-1.5, 0.0, get_compass_angle());
+bool find_a_box(){
+  bool box_found = false;
+  for(int i=0; i< 8; i++){
+    if(find_object()){
+      box_found = true;
+      break;
+    }else{
+      high_level_go_to(searching_points[i][0], searching_points[i][1], -M_PI_2);
+    }
   }
+  return box_found;
+}
 
-  Vector2 box_pos = get_box_pos();
-
-  double alpha = box_orientation(box_pos);
+static void move_toward_the_box(){
   double target_pos[3];
+  Vector2 box_pos = get_box_pos();
+  double alpha = box_orientation(box_pos);
   Vector2 target = get_target_pos(box_pos,alpha);
   target_pos[0] = target.u;
   target_pos[1] = target.v;
   target_pos[2] = alpha;
-
-
   high_level_go_to(target_pos[0], target_pos[1], target_pos[2]);
-  pick_box();
+}
 
-  // for (int i = 0; i < n_boxes; i++)
-  // {
-  //   double box_pos[2] = goto_info[i];
-  //   double alpha = box_orientation(box_pos);
+static void automatic_behavior() {
+  arm_set_height(ARM_HANOI_PREPARE);
+  double target_pos[3]={0.0,0.0,0.0};
 
-  //   double target_pos[3];
-  //   target_pos[0]=get_target_pos_x(box_pos,alpha);
-  //   target_pos[1]=get_target_pos_y(box_pos,alpha);
-  //   target_pos[2]=alpha;
+  while(find_a_box()){
+    move_toward_the_box();
+    move_toward_the_box();
+    pick_box();
+    if(picked_boxes_count==3){
+      place_all_boxes(target_pos);
+      high_level_go_to(0.0, 0.0, -M_PI_2);
+    }
+  }
 
-  //   high_level_go_to(target_pos[0], target_pos[1], target_pos[2]);
-  //   pick_box();
-  //   if(picked_boxes_count==3 || i==n_boxes-1){
-  //     place_all_boxes(target_pos);
-  //     if(i<n_boxes-1)
-  //       turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),box_orientation(goto_info[i+1]));
-  //   }
-  // }
+  
+  if(picked_boxes_count > 0)
+    place_all_boxes(target_pos);
 
   arm_reset();
   high_level_go_to(0.0, 0.0, -M_PI_2);
