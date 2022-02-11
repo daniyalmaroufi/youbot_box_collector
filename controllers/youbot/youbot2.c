@@ -1,3 +1,4 @@
+
 /*
  * Copyright 1996-2021 Cyberbotics Ltd.
  *
@@ -21,6 +22,12 @@
 #include <webots/camera.h>
 #include <webots/range_finder.h>
 #include <webots/robot.h>
+#include <webots/keyboard.h>
+#include <webots/lidar.h>
+#include <webots/motor.h>
+#include <webots/distance_sensor.h>
+#include <webots/compass.h>
+#include <tiny_math.h>
 
 #include <arm.h>
 #include <base.h>
@@ -29,6 +36,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 
 #define TIME_STEP 32
 
@@ -42,6 +51,10 @@ int n_boxes=11;
 int stored_boxes[2]={0,0};
 int picked_boxes_count=0;
 int picked_boxes_color[3]={RED_COLOR,RED_COLOR,RED_COLOR};
+
+// static WbDeviceTag compass;
+
+// bool flag_obj=false;
 
 double get_box_pos_y(int color){
   if(color==RED_COLOR)
@@ -81,6 +94,11 @@ static void passive_wait(double sec) {
   } while (start_time + sec > wb_robot_get_time());
 }
 
+// static void rotation() {
+//   base_turn_left();
+//   //base_set_speeds(0, 0, 3.14);
+// }
+
 static void high_level_go_to(double x, double y, double a) {
   base_goto_set_target(x, y, a);
   while (!base_goto_reached()) {
@@ -92,18 +110,6 @@ static void high_level_go_to(double x, double y, double a) {
 
 static void turn_around(double x, double y,double direction) {
   high_level_go_to(x, y, direction);
-}
-
-double get_orientation(double box_pos[2]){
-  double x=target_pos[0];
-  double y=target_pos[1];
-  if(x<0)
-    if(y<0)
-      return M_PI;
-    else
-      return 0;
-  else
-    return -M_PI_2;
 }
 
 static void high_level_grip_box(double y, int level, int column, bool grip) {
@@ -181,7 +187,7 @@ static void place_box(int color){
   picked_boxes_count-=1;
 }
 
-static void place_all_boxes(double current_pos[3]){
+static void place_all_boxes(double current_pos[2]){
   turn_around(current_pos[0],current_pos[1],M_PI_2);
   if(picked_boxes_count==3)
     place_box(picked_boxes_color[2]);
@@ -195,37 +201,106 @@ static void place_all_boxes(double current_pos[3]){
   }
 }
 
-static void automatic_behavior(WbDeviceTag kinect_color) {
+static void set_thresh_pos(double goto_info[11][2], int i, double goto_info_alpha){
   double delta = distance_arm0_platform + distance_arm0_robot_center;
 
-  double goto_info[11][3] = { {0.75-delta, 0, -M_PI_2},
-                              {1-delta,-0.349, -M_PI_2},
-                              {-0.943, 1.792-delta, 0},
-                              {-1.978, 2-delta, 0},
-                              {0.465, 2-delta, 0},
-                              {1.648-delta, 1.19, -M_PI_2},
-                              {1.349-delta, -0.981, -M_PI_2},
-                              {2-delta, -1.6, -M_PI_2},
-                              {2.125-delta, 0.75, -M_PI_2},
-                              {-0.75, -1.745+delta, M_PI},
-                              {-1.648, -2.19+delta, M_PI}};
+  if (goto_info_alpha == -M_PI_2)  goto_info[i][0] -= delta;
+  else if (goto_info_alpha == M_PI)  goto_info[i][1] -= delta;
+  else if (goto_info_alpha == 0)  goto_info[i][1] -= delta;
+  else  goto_info[i][0] -= delta;
+}
+
+
+// static void find_obj(){
+
+//   WbDeviceTag lidar = wb_robot_get_device("lidar");
+//   wb_lidar_enable(lidar,TIME_STEP);
+//   wb_lidar_enable_point_cloud(lidar);
+//     const float *range_image = wb_lidar_get_range_image(lidar);
+//       while (range_image[0]<1){
+//         rotation();
+//       }
+//         flag_obj=true;
+// }
+
+// static void lidar_goto(){
+
+//     const double *compass_raw_values = wb_compass_get_values(compass);
+//     Vector2 v_front = {compass_raw_values[0], compass_raw_values[1]};
+
+//     // Vector2 v_right = {-v_front.v, v_front.u};
+//     Vector2 v_north = {1.0, 0.0};
+
+//     // compute distance
+//     // Vector2 v_dir;
+//     // double distance = vector2_norm(&v_dir);
+
+//     // compute absolute angle & delta with the delta with the target angle
+//     double theta = vector2_angle(&v_front, &v_north);
+
+//   WbDeviceTag ds = wb_robot_get_device("ds");
+//     wb_distance_sensor_enable(ds,TIME_STEP);
+//     double ds_val = wb_distance_sensor_get_value(ds);
+
+//     high_level_go_to(ds_val*cos(theta), ds_val*sin(theta), theta);
+// }
+
+
+static void automatic_behavior(WbDeviceTag kinect_color) {
+  
+  double goto_info_alpha = -M_PI_2;
+
+  double goto_info[11][2] = { {0.75, 0},
+                              {1,-0.349},
+                              {-0.943, 1.792},
+                              {-1.978, 2},
+                              {0.465, 2},
+                              {1.648, 1.19},
+                              {1.349, -0.981},
+                              {2, -1.6},
+                              {2.125, 0.75},
+                              {-0.75, -1.745},
+                              {-1.648, -2.19}};
 
   arm_set_height(ARM_HANOI_PREPARE);
 
   for (int i = 0; i < n_boxes; i++)
   {
-    high_level_go_to(goto_info[i][0], goto_info[i][1], goto_info[i][2]);
+    set_thresh_pos(goto_info, i, goto_info_alpha);
+
+    high_level_go_to(goto_info[i][0], goto_info[i][1], goto_info_alpha);
+
+    // find_obj();
+    // lidar_goto();
+
+    if (abs(goto_info[i+1][0]-goto_info[i][0])>0.3 || abs(goto_info[i+1][1]-goto_info[i][1])>0.3){
+      if (goto_info[i+1][1]-goto_info[i][1] >= abs(goto_info[i+1][0]-goto_info[i][0]))
+          goto_info_alpha = -M_PI_2;  /////
+      else if (abs(goto_info[i+1][1]-goto_info[i][1]) <= (goto_info[i+1][0]-goto_info[i][0]))
+          goto_info_alpha = M_PI;
+      else if (abs(goto_info[i+1][1]-goto_info[i][1]) <= -(goto_info[i+1][0]-goto_info[i][0]))
+          goto_info_alpha = 0;
+      else
+          goto_info_alpha = -M_PI_2;
+    }
+
+
     pick_box(kinect_color);
     if(picked_boxes_count==3 || i==n_boxes-1){
       place_all_boxes(goto_info[i]);
-      if(i<n_boxes-1)
-        turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),goto_info[i+1][2]);
+      if(i<n_boxes-1){
+        turn_around(-1.611,get_box_pos_y(picked_boxes_color[0]),goto_info_alpha);
+        goto_info[i][0] = -1.611;
+        goto_info[i][1] = get_box_pos_y(picked_boxes_color[0]);
+        //turn_around(goto_info[i][0], goto_info[i][1], goto_info_alpha);
+      }
     }
   }
 
   arm_reset();
   high_level_go_to(0.0, 0.0, -M_PI_2);
 }
+
 
 int main(int argc, char **argv) {
   wb_robot_init();
@@ -234,13 +309,12 @@ int main(int argc, char **argv) {
   base_goto_init(TIME_STEP);
   arm_init();
   gripper_init();
+  passive_wait(1.0);
 
   WbDeviceTag kinect_color = wb_robot_get_device("kinect color");
   WbDeviceTag kinect_range = wb_robot_get_device("kinect range");
   wb_camera_enable(kinect_color, TIME_STEP);
   wb_range_finder_enable(kinect_range, TIME_STEP);
-
-  passive_wait(1.0);
 
   automatic_behavior(kinect_color);
 
@@ -248,3 +322,4 @@ int main(int argc, char **argv) {
 
   return 0;
 }
+
